@@ -7,7 +7,6 @@ import { FounderView } from './components/FounderView';
 import { AdminView } from './components/AdminView';
 import { VCView } from './components/VCView';
 import { PublicVotingView } from './components/PublicVotingView';
-import { CyberBackground } from './components/CyberBackground';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { CONTRACT_ID, NETWORK_PASSPHRASE } from './config';
 import { server } from './stellar';

@@ -70,11 +70,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     
     try {
       // Request access to Freighter
-      const accessObj = await requestAccess();
-      
-      if (accessObj.error) {
-        throw new Error(accessObj.error);
-      }
+      await requestAccess();
 
       // Get public key
       const key = await getPublicKey();
