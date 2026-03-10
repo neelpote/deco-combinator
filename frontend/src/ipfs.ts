@@ -34,12 +34,16 @@ export const uploadToIPFS = async (metadata: Omit<ProjectMetadata, 'timestamp'>)
 
     if (PINATA_JWT) {
       headers['Authorization'] = `Bearer ${PINATA_JWT}`;
+      console.log('Using Pinata JWT authentication');
     } else if (PINATA_API_KEY && PINATA_SECRET_KEY) {
       headers['pinata_api_key'] = PINATA_API_KEY;
       headers['pinata_secret_api_key'] = PINATA_SECRET_KEY;
+      console.log('Using Pinata API key authentication');
     } else {
-      throw new Error('Pinata credentials not configured. Please set VITE_PINATA_JWT or VITE_PINATA_API_KEY/VITE_PINATA_SECRET_KEY in .env');
+      throw new Error('Pinata credentials not configured. Please set VITE_PINATA_JWT in .env file.\n\nGet your JWT token from: https://app.pinata.cloud/developers/api-keys');
     }
+
+    console.log('Uploading to IPFS...', { project_name: metadata.project_name });
 
     const response = await axios.post(
       'https://api.pinata.cloud/pinning/pinJSONToIPFS',
@@ -52,6 +56,7 @@ export const uploadToIPFS = async (metadata: Omit<ProjectMetadata, 'timestamp'>)
       { headers }
     );
 
+    console.log('IPFS upload successful:', response.data.IpfsHash);
     return response.data.IpfsHash;
   } catch (error) {
     console.error('IPFS upload error:', error);
@@ -59,10 +64,20 @@ export const uploadToIPFS = async (metadata: Omit<ProjectMetadata, 'timestamp'>)
       console.error('Axios error details:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
-        data: error.response?.data
+        data: error.response?.data,
+        message: error.message
       });
+      
+      // Provide specific error messages
+      if (error.response?.status === 401) {
+        throw new Error('Pinata authentication failed. Your JWT token may have expired.\n\nPlease get a new token from: https://app.pinata.cloud/developers/api-keys');
+      } else if (error.response?.status === 403) {
+        throw new Error('Pinata access forbidden. Please check your API key permissions.');
+      } else if (error.code === 'ERR_NETWORK') {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      }
     }
-    throw new Error('Failed to upload to IPFS. Please check your Pinata credentials.');
+    throw new Error('Failed to upload to IPFS. Please check the console for details and verify your Pinata credentials.');
   }
 };
 
