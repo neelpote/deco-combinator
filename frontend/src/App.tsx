@@ -8,6 +8,7 @@ import { AdminView } from './components/AdminView';
 import { VCView } from './components/VCView';
 import { PublicVotingView } from './components/PublicVotingView';
 import { AboutView } from './components/AboutView';
+import { PublicStartupDirectory } from './components/PublicStartupDirectory';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { CONTRACT_ID, NETWORK_PASSPHRASE } from './config';
 import { server } from './stellar';
@@ -240,62 +241,40 @@ function AppContent() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!wallet.isConnected || !wallet.publicKey ? (
-          <div className="text-center py-20">
-            <div className="mb-12">
-              <h2 className="text-5xl font-bold text-gray-900 mb-4">
-                Welcome to DeCo
-              </h2>
-              <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-                The decentralized accelerator platform powered by Stellar blockchain. 
-                Connect your wallet to apply for funding, manage investments, or oversee the accelerator.
-              </p>
-            </div>
-            
-            <div className="flex gap-4 justify-center mb-8">
-              <button
-                onClick={connectWallet}
-                className="btn btn-primary px-8 py-3 text-lg font-semibold"
-              >
-                Connect Freighter Wallet
-              </button>
-              <button
-                onClick={() => setViewMode('about')}
-                className="btn btn-primary px-8 py-3 text-lg font-semibold bg-gray-600 hover:bg-gray-700"
-              >
-                Learn More
-              </button>
-            </div>
+          viewMode === 'about' ? (
+            <AboutView />
+          ) : (
+            <>
+              {/* Welcome Section */}
+              <div className="text-center py-12 mb-12">
+                <h2 className="text-5xl font-bold text-gray-900 mb-4">
+                  Welcome to DeCo
+                </h2>
+                <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+                  The decentralized accelerator platform powered by Stellar blockchain. 
+                  Browse startup applications below or connect your wallet to participate.
+                </p>
+                
+                <div className="flex gap-4 justify-center mb-8">
+                  <button
+                    onClick={connectWallet}
+                    className="btn btn-primary px-8 py-3 text-lg font-semibold"
+                  >
+                    Connect Freighter Wallet
+                  </button>
+                  <button
+                    onClick={() => setViewMode('about')}
+                    className="btn btn-primary px-8 py-3 text-lg font-semibold bg-gray-600 hover:bg-gray-700"
+                  >
+                    Learn More
+                  </button>
+                </div>
+              </div>
 
-            {/* Feature Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 max-w-5xl mx-auto">
-              <div className="card">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">For Founders</h3>
-                <p className="text-gray-600">
-                  Apply for funding and receive milestone-based investments directly to your wallet
-                </p>
-              </div>
-              <div className="card">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">For VCs</h3>
-                <p className="text-gray-600">
-                  Stake tokens to verify, then invest directly in approved startups
-                </p>
-              </div>
-              <div className="card">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">For Community</h3>
-                <p className="text-gray-600">
-                  Vote on startup applications and help shape the future of DeCo
-                </p>
-              </div>
-            </div>
-
-            {/* Blockchain Badge */}
-            <div className="mt-16 inline-flex items-center space-x-3 bg-white border-2 border-gray-300 rounded-lg px-6 py-3">
-              <div className="text-left">
-                <div className="text-xs text-gray-500 uppercase tracking-wider">Powered by</div>
-                <div className="text-sm font-semibold text-blue-600">Stellar Blockchain</div>
-              </div>
-            </div>
-          </div>
+              {/* Public Startup Directory */}
+              <PublicStartupDirectory onConnectWallet={connectWallet} />
+            </>
+          )
         ) : (
           renderView()
         )}
