@@ -180,10 +180,6 @@ impl DeCo {
             .get(&DataKey::Startup(founder.clone()))
             .expect("startup not found");
 
-        if !startup.approved {
-            panic!("startup not approved");
-        }
-
         token::Client::new(&env, &xlm_token)
             .transfer(&vc, &env.current_contract_address(), &amount);
 

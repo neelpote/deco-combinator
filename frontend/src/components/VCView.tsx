@@ -299,7 +299,7 @@ export const VCView = ({ publicKey }: VCViewProps) => {
         </form>
       </div>
 
-      {viewingAddress && startupData && startupData.approved && (
+      {viewingAddress && startupData && startupData.exists && (
         <div className="space-y-4">
           <div className="card">
             <div className="flex justify-between items-start mb-4">
@@ -355,10 +355,10 @@ export const VCView = ({ publicKey }: VCViewProps) => {
         </div>
       )}
 
-      {viewingAddress && startupData && !startupData.approved && (
+      {viewingAddress && startupData && !startupData.exists && (
         <div className="card text-center py-12">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Not Approved Yet</div>
-          <p className="text-zinc-500 text-sm">This startup hasn't been approved by the admin yet.</p>
+          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Startup Not Found</div>
+          <p className="text-zinc-500 text-sm">No application found for this address.</p>
         </div>
       )}
     </div>
