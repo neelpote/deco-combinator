@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { signTransaction } from '@stellar/freighter-api';
@@ -8,6 +8,7 @@ import { useStartupStatus } from '../hooks/useStartupStatus';
 import { useIPFSMetadata } from '../hooks/useIPFSMetadata';
 import { uploadToIPFS } from '../ipfs';
 import { ChatBox } from './ChatBox';
+import { useUnreadCounts, requestNotificationPermission } from '../hooks/useUnreadCounts';
 
 interface FounderViewProps {
   publicKey: string;
@@ -26,6 +27,11 @@ export const FounderView = ({ publicKey }: FounderViewProps) => {
   const { data: startupData, isLoading } = useStartupStatus(publicKey);
   const { data: metadata, isLoading: metadataLoading } = useIPFSMetadata(startupData?.ipfs_cid);
   const { data: allVCs = [] } = useQuery({ queryKey: ['allVCs'], queryFn: getAllVCs, refetchInterval: 30000 });
+
+  const { totalUnread, getUnread, clearUnread } = useUnreadCounts(publicKey, allVCs);
+
+  // Request browser notification permission once
+  useEffect(() => { requestNotificationPermission(); }, []);
 
   // Milestone vote tally for the founder's own startup
   const { data: voteTally = [0, 0] } = useQuery({
@@ -407,23 +413,38 @@ export const FounderView = ({ publicKey }: FounderViewProps) => {
           {/* VC Messages */}
           {allVCs.length > 0 && (
             <div className="card">
-              <div className="text-[11px] font-bold uppercase tracking-widest mb-4">Messages from VCs</div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-[11px] font-bold uppercase tracking-widest">Messages from VCs</div>
+                {totalUnread > 0 && (
+                  <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5">{totalUnread} unread</span>
+                )}
+              </div>
               <div className="space-y-2">
-                {allVCs.slice(0, 10).map((vc: string) => (
-                  <button
-                    key={vc}
-                    onClick={() => setChatWithVC(chatWithVC === vc ? null : vc)}
-                    className="w-full text-left p-3 border border-black/10 hover:border-black transition-all flex justify-between items-center"
-                  >
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">VC</div>
-                      <div className="text-xs font-mono">{vc.slice(0, 8)}...{vc.slice(-6)}</div>
-                    </div>
-                    <div className="text-[11px] font-bold uppercase tracking-widest">
-                      {chatWithVC === vc ? 'Close' : 'Open Chat →'}
-                    </div>
-                  </button>
-                ))}
+                {allVCs.slice(0, 10).map((vc: string) => {
+                  const unread = getUnread(vc);
+                  return (
+                    <button
+                      key={vc}
+                      onClick={() => setChatWithVC(chatWithVC === vc ? null : vc)}
+                      className="w-full text-left p-3 border border-black/10 hover:border-black transition-all flex justify-between items-center"
+                    >
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">VC</div>
+                        <div className="text-xs font-mono">{vc.slice(0, 8)}...{vc.slice(-6)}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {unread > 0 && (
+                          <span className="w-5 h-5 bg-black text-white text-[10px] font-bold flex items-center justify-center">
+                            {unread}
+                          </span>
+                        )}
+                        <div className="text-[11px] font-bold uppercase tracking-widest">
+                          {chatWithVC === vc ? 'Close' : 'Open →'}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -436,6 +457,7 @@ export const FounderView = ({ publicKey }: FounderViewProps) => {
           otherAddress={chatWithVC}
           otherLabel="VC"
           onClose={() => setChatWithVC(null)}
+          onRead={() => clearUnread(chatWithVC)}
         />
       )}
     </div>

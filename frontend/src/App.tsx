@@ -13,7 +13,8 @@ import { AboutView } from './components/AboutView';
 import { PublicStartupDirectory } from './components/PublicStartupDirectory';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { CONTRACT_ID, NETWORK_PASSPHRASE } from './config';
-import { server, getAccount } from './stellar';
+import { server, getAccount, getAllVCs, getAllStartups } from './stellar';
+import { useUnreadCounts } from './hooks/useUnreadCounts';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 2, refetchOnWindowFocus: false } },
@@ -26,6 +27,16 @@ function AppContent() {
   const { data: adminAddress, isLoading: adminLoading } = useAdmin();
   const [viewMode, setViewMode] = useState<ViewMode>('founder');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Fetch all addresses to track unread messages across all chats
+  const { data: allVCs = [] } = useQuery({ queryKey: ['allVCs'], queryFn: getAllVCs, enabled: !!wallet.publicKey });
+  const { data: allStartups = [] } = useQuery({ queryKey: ['allStartups'], queryFn: getAllStartups, enabled: !!wallet.publicKey });
+
+  // For a founder: unread = messages from VCs. For a VC: unread = messages from founders.
+  const chatPeers = wallet.publicKey
+    ? [...new Set([...allVCs, ...allStartups].filter(a => a !== wallet.publicKey))]
+    : [];
+  const { totalUnread } = useUnreadCounts(wallet.publicKey || '', chatPeers);
 
   useEffect(() => {
     const handleNavigateToVC = () => setViewMode('vc');
@@ -105,13 +116,16 @@ function AppContent() {
                 <button
                   key={link.view}
                   onClick={() => setViewMode(link.view)}
-                  className={`px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all ${
+                  className={`relative px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all ${
                     viewMode === link.view
                       ? 'bg-black text-white'
                       : 'text-zinc-500 hover:text-black'
                   }`}
                 >
                   {link.label}
+                  {totalUnread > 0 && (link.view === 'founder' || link.view === 'vc') && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-black rounded-full border border-white" />
+                  )}
                 </button>
               ))}
               {isAdmin && (

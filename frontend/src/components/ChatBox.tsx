@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase, getChatId } from '../supabase';
+import { markChatRead } from '../hooks/useUnreadCounts';
 
 interface Message {
   id: string;
@@ -12,16 +13,23 @@ interface Message {
 interface ChatBoxProps {
   myAddress: string;
   otherAddress: string;
-  otherLabel: string; // "Founder" or "VC"
+  otherLabel: string;
   onClose: () => void;
+  onRead?: () => void; // called when chat is opened so parent can clear badge
 }
 
-export const ChatBox = ({ myAddress, otherAddress, otherLabel, onClose }: ChatBoxProps) => {
+export const ChatBox = ({ myAddress, otherAddress, otherLabel, onClose, onRead }: ChatBoxProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatId = getChatId(myAddress, otherAddress);
+
+  // Mark as read when opened
+  useEffect(() => {
+    markChatRead(chatId);
+    onRead?.();
+  }, [chatId]);
 
   // Load existing messages
   useEffect(() => {
@@ -30,12 +38,10 @@ export const ChatBox = ({ myAddress, otherAddress, otherLabel, onClose }: ChatBo
       .select('*')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        if (data) setMessages(data);
-      });
+      .then(({ data }) => { if (data) setMessages(data); });
   }, [chatId]);
 
-  // Subscribe to new messages in realtime
+  // Subscribe to new messages
   useEffect(() => {
     const channel = supabase
       .channel(`chat:${chatId}`)
@@ -43,15 +49,17 @@ export const ChatBox = ({ myAddress, otherAddress, otherLabel, onClose }: ChatBo
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          setMessages(prev => [...prev, payload.new as Message]);
+          // Mark read immediately since chat is open
+          markChatRead(chatId);
+          onRead?.();
         }
       )
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [chatId]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -60,19 +68,13 @@ export const ChatBox = ({ myAddress, otherAddress, otherLabel, onClose }: ChatBo
     e.preventDefault();
     if (!text.trim() || sending) return;
     setSending(true);
-    await supabase.from('messages').insert({
-      chat_id: chatId,
-      sender: myAddress,
-      text: text.trim(),
-    });
+    await supabase.from('messages').insert({ chat_id: chatId, sender: myAddress, text: text.trim() });
     setText('');
     setSending(false);
   };
 
-  const formatTime = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+  const formatTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const truncate = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
@@ -90,11 +92,9 @@ export const ChatBox = ({ myAddress, otherAddress, otherLabel, onClose }: ChatBo
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {messages.length === 0 && (
-          <div className="text-center text-zinc-400 text-xs mt-8">
-            No messages yet. Say hello.
-          </div>
+          <div className="text-center text-zinc-400 text-xs mt-8">No messages yet. Say hello.</div>
         )}
-        {messages.map((msg) => {
+        {messages.map(msg => {
           const isMe = msg.sender === myAddress;
           return (
             <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
@@ -113,7 +113,7 @@ export const ChatBox = ({ myAddress, otherAddress, otherLabel, onClose }: ChatBo
         <input
           type="text"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={e => setText(e.target.value)}
           placeholder="Type a message..."
           className="flex-1 px-3 py-2 text-sm outline-none"
           autoFocus

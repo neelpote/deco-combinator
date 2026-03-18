@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { signTransaction } from '@stellar/freighter-api';
@@ -6,6 +6,7 @@ import { CONTRACT_ID, NETWORK_PASSPHRASE, TESTNET_XLM_CONTRACT, HORIZON_URL } fr
 import { server, getStartupStatus, getVCStakeRequired, getVCData, getAllStartups, getAccount, getVCInvestment, hasVotedMilestone } from '../stellar';
 import { useIPFSMetadata } from '../hooks/useIPFSMetadata';
 import { ChatBox } from './ChatBox';
+import { useUnreadCounts, requestNotificationPermission } from '../hooks/useUnreadCounts';
 
 const horizonServer = new StellarSdk.Horizon.Server(HORIZON_URL);
 
@@ -20,6 +21,14 @@ export const VCView = ({ publicKey }: VCViewProps) => {
   const [investAmount, setInvestAmount] = useState('');
   const [chatOpen, setChatOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  // Unread notifications — track all startups the VC is viewing
+  const { getUnread, clearUnread } = useUnreadCounts(
+    publicKey,
+    viewingAddress ? [viewingAddress] : []
+  );
+
+  useEffect(() => { requestNotificationPermission(); }, []);
 
   const { data: stakeRequired = '0' } = useQuery({ queryKey: ['vcStakeRequired'], queryFn: getVCStakeRequired });
 
@@ -360,13 +369,22 @@ export const VCView = ({ publicKey }: VCViewProps) => {
 
           {/* Message founder */}
           <div className="card">
-            <div className="text-[11px] font-bold uppercase tracking-widest mb-2">Direct Message</div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[11px] font-bold uppercase tracking-widest">Direct Message</div>
+              {viewingAddress && getUnread(viewingAddress) > 0 && (
+                <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5">
+                  {getUnread(viewingAddress)} new
+                </span>
+              )}
+            </div>
             <p className="text-xs text-zinc-500 mb-4">Have a question for the founder? Send them a message directly.</p>
             <button
               onClick={() => setChatOpen(true)}
               className="btn btn-outline w-full py-3"
             >
-              Message Founder
+              {viewingAddress && getUnread(viewingAddress) > 0
+                ? `Message Founder (${getUnread(viewingAddress)} unread)`
+                : 'Message Founder'}
             </button>
           </div>
 
@@ -429,6 +447,7 @@ export const VCView = ({ publicKey }: VCViewProps) => {
           otherAddress={viewingAddress}
           otherLabel="Founder"
           onClose={() => setChatOpen(false)}
+          onRead={() => clearUnread(viewingAddress)}
         />
       )}
     </div>
