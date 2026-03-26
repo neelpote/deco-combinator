@@ -295,6 +295,22 @@ Changes shipped based on real user feedback are tagged in commit messages with `
 
 ---
 
+## Early Testers
+
+The following Stellar wallets participated in the DeCo testnet beta. Their feedback directly shaped the product.
+
+| # | Stellar Address |
+|---|---|
+| 1 | `GBASPEHFT2Z6ANA5HBKJSAJXQR3NKTBG6L7U4FIKXBT7NR6YTDAG27S` |
+| 2 | `MGAEJZTWGMZCDGYWOSOVEVT5XTP6WHAK2GLJLG57ZUCJRKHTD4BOVOBF3` |
+| 3 | `GAJUBCHBQ5MFPJGKOJ5AUE66KFSVWEOYVZOLUGMK6IF5L4IREX7DTB7S` |
+| 4 | `GAUSDMY7ZOOFJBWR57G4CN4VNF6EFPVRR34QSFT3KEAC3I5IBXHT5DP4` |
+| 5 | `GAGH5DAS46ZP4CTVAZCZJHWTOOVCSB3JQ5SAZITTTNQWG4Q7K2BGZ543` |
+
+> Addresses are Stellar testnet public keys. No private data is stored or displayed.
+
+---
+
 ## Contributing
 
 ```bash
