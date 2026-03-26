@@ -40,6 +40,9 @@ const PublicStartupCard = ({ address, onClick }: { address: string; onClick: () 
     );
   }
 
+  // Hide cards where metadata loaded but has no project name
+  if (meta !== undefined && !meta?.project_name) return null;
+
   const total = Number(startup.yes_votes) + Number(startup.no_votes);
   const pct = total > 0 ? Math.round((Number(startup.yes_votes) / total) * 100) : 0;
   const active = isActive(startup.voting_end_time);

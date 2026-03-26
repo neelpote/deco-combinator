@@ -10,6 +10,21 @@ import { useUnreadCounts, requestNotificationPermission } from '../hooks/useUnre
 
 const horizonServer = new StellarSdk.Horizon.Server(HORIZON_URL);
 
+// Filters out startups with no IPFS name in the browse list
+const BrowseStartupButton = ({ address, onClick }: { address: string; onClick: () => void }) => {
+  const { data: startup } = useQuery({ queryKey: ['startupCard', address], queryFn: () => getStartupStatus(address), staleTime: 30000 });
+  const { data: meta } = useIPFSMetadata(startup?.ipfs_cid);
+  if (meta !== undefined && !meta?.project_name) return null;
+  return (
+    <button onClick={onClick} className="text-left p-4 border border-black/10 hover:border-black transition-all">
+      <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Startup</div>
+      <div className="text-sm font-bold truncate mb-1">{meta?.project_name || <span className="text-zinc-300">Loading...</span>}</div>
+      <div className="text-xs font-mono text-zinc-400 truncate mb-2">{address}</div>
+      <div className="text-[11px] font-bold uppercase tracking-widest">View Details →</div>
+    </button>
+  );
+};
+
 interface VCViewProps {
   publicKey: string;
 }
@@ -282,11 +297,7 @@ export const VCView = ({ publicKey }: VCViewProps) => {
           <div className="text-[11px] font-bold uppercase tracking-widest mb-4">Browse Startups</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {allStartups.slice(0, 6).map((address: string) => (
-              <button key={address} onClick={() => setViewingAddress(address)} className="text-left p-4 border border-black/10 hover:border-black transition-all">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Founder</div>
-                <div className="text-xs font-mono truncate mb-2">{address}</div>
-                <div className="text-[11px] font-bold uppercase tracking-widest">View Details →</div>
-              </button>
+              <BrowseStartupButton key={address} address={address} onClick={() => setViewingAddress(address)} />
             ))}
           </div>
         </div>
