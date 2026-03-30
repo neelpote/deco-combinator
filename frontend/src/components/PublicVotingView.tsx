@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { signTransaction } from '@stellar/freighter-api';
 import { CONTRACT_ID, NETWORK_PASSPHRASE } from '../config';
-import { server, getStartupStatus, getAllStartups, getAccount } from '../stellar';
+import { server, getStartupStatus, getAllStartups, getAccount, submitWithFeeBump } from '../stellar';
 import { useIPFSMetadata } from '../hooks/useIPFSMetadata';
 
 const timeRemaining = (endTime: number | bigint) => {
@@ -169,11 +169,12 @@ export const PublicVotingView = ({ publicKey }: PublicVotingViewProps) => {
       const prepared = await server.prepareTransaction(tx);
       const signedXdr = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-      const result = await server.sendTransaction(signedTx);
-      let status = await server.getTransaction(result.hash);
-      while (status.status === 'NOT_FOUND') {
+      const { hash } = await submitWithFeeBump(signedTx);
+      let status = await server.getTransaction(hash);
+      let i = 0;
+      while (status.status === 'NOT_FOUND' && i++ < 20) {
         await new Promise(r => setTimeout(r, 1000));
-        status = await server.getTransaction(result.hash);
+        status = await server.getTransaction(hash);
       }
       if (status.status !== 'SUCCESS') throw new Error('Transaction failed');
       return status;

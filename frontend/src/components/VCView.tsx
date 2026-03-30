@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { signTransaction } from '@stellar/freighter-api';
 import { CONTRACT_ID, NETWORK_PASSPHRASE, TESTNET_XLM_CONTRACT, HORIZON_URL } from '../config';
-import { server, getStartupStatus, getVCStakeRequired, getVCData, getAllStartups, getAccount, getVCInvestment, hasVotedMilestone } from '../stellar';
+import { server, getStartupStatus, getVCStakeRequired, getVCData, getAllStartups, getAccount, getVCInvestment, hasVotedMilestone, submitWithFeeBump } from '../stellar';
 import { useIPFSMetadata } from '../hooks/useIPFSMetadata';
 import { ChatBox } from './ChatBox';
 import { useUnreadCounts, requestNotificationPermission } from '../hooks/useUnreadCounts';
@@ -108,9 +108,10 @@ export const VCView = ({ publicKey }: VCViewProps) => {
       const prepared = await server.prepareTransaction(transaction);
       const signedXdr = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-      const result = await server.sendTransaction(signedTx);
-      let status = await server.getTransaction(result.hash);
-      while (status.status === 'NOT_FOUND') { await new Promise(r => setTimeout(r, 1000)); status = await server.getTransaction(result.hash); }
+      const { hash: stakeHash } = await submitWithFeeBump(signedTx);
+      let status = await server.getTransaction(stakeHash);
+      let i = 0;
+      while (status.status === 'NOT_FOUND' && i++ < 20) { await new Promise(r => setTimeout(r, 1000)); status = await server.getTransaction(stakeHash); }
       if (status.status !== 'SUCCESS') throw new Error('Transaction failed');
       return status;
     },
@@ -130,9 +131,10 @@ export const VCView = ({ publicKey }: VCViewProps) => {
       const prepared = await server.prepareTransaction(transaction);
       const signedXdr = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-      const result = await server.sendTransaction(signedTx);
-      let status = await server.getTransaction(result.hash);
-      while (status.status === 'NOT_FOUND') { await new Promise(r => setTimeout(r, 1000)); status = await server.getTransaction(result.hash); }
+      const { hash: investHash } = await submitWithFeeBump(signedTx);
+      let status = await server.getTransaction(investHash);
+      let i = 0;
+      while (status.status === 'NOT_FOUND' && i++ < 20) { await new Promise(r => setTimeout(r, 1000)); status = await server.getTransaction(investHash); }
       if (status.status !== 'SUCCESS') throw new Error('Transaction failed');
       return status;
     },
@@ -161,9 +163,10 @@ export const VCView = ({ publicKey }: VCViewProps) => {
       const prepared = await server.prepareTransaction(transaction);
       const signedXdr = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       const signedTx = StellarSdk.TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-      const result = await server.sendTransaction(signedTx);
-      let status = await server.getTransaction(result.hash);
-      while (status.status === 'NOT_FOUND') { await new Promise(r => setTimeout(r, 1000)); status = await server.getTransaction(result.hash); }
+      const { hash: voteHash } = await submitWithFeeBump(signedTx);
+      let status = await server.getTransaction(voteHash);
+      let i = 0;
+      while (status.status === 'NOT_FOUND' && i++ < 20) { await new Promise(r => setTimeout(r, 1000)); status = await server.getTransaction(voteHash); }
       if (status.status !== 'SUCCESS') throw new Error('Transaction failed');
       return status;
     },

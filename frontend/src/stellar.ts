@@ -193,3 +193,34 @@ export const getMilestoneVoteTally = async (founder: string): Promise<[number, n
     return [0, 0];
   }
 };
+
+// ─── Fee Bump submission ──────────────────────────────────────────────────────
+// Sends the user-signed transaction to our fee bump API.
+// The sponsor pays all fees — user needs zero XLM for gas.
+// Falls back to direct submission if the API is unavailable.
+
+export const submitWithFeeBump = async (
+  signedTx: StellarSdk.Transaction | StellarSdk.FeeBumpTransaction
+): Promise<{ hash: string }> => {
+  try {
+    const res = await fetch('/api/fee-bump', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ innerTxXdr: signedTx.toXDR() }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Fee bump API returned ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log(`✅ Fee paid by sponsor: ${data.feePaidBy?.slice(0, 8)}...`);
+    return { hash: data.hash };
+  } catch (feeBumpError) {
+    // Fallback: submit directly (user pays their own fee)
+    console.warn('Fee bump unavailable, submitting directly:', feeBumpError);
+    const result = await server.sendTransaction(signedTx);
+    return { hash: result.hash };
+  }
+};
