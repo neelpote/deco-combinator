@@ -305,9 +305,6 @@ All user feedback has been addressed and shipped to production. Here are the key
 | Cryptic milestone release error | Kavya Reddy | [`756528f`](https://github.com/neelpote/deco-stellar-accelerator/commit/756528f) | ✅ Fixed |
 | Milestone vote tally not updating | Nisha Agarwal | Included in milestone implementation | ✅ Fixed |
 
-**Response Rate:** 100% of feedback addressed within 24 hours  
-**User Satisfaction:** Average rating improved from 7.2/10 to 8.4/10 after fixes
-
 ---
 
 ## Early Testers
