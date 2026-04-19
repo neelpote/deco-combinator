@@ -75,7 +75,10 @@ function AppContent() {
   // ── Role-based nav ────────────────────────────────────────────────────────
   // Build nav links based on who is connected
   const navLinks = (() => {
-    if (!wallet.isConnected) return [{ label: 'About', view: 'about' as ViewMode }];
+    if (!wallet.isConnected) return [
+      { label: 'About', view: 'about' as ViewMode },
+      { label: 'Metrics', view: 'metrics' as ViewMode },
+    ];
 
     const links: { label: string; view: ViewMode; unreadDot?: boolean }[] = [];
 
@@ -92,11 +95,11 @@ function AppContent() {
       links.push({ label: 'Become VC', view: 'vc' });
     }
 
+    links.push({ label: 'Metrics', view: 'metrics' });
     links.push({ label: 'About', view: 'about' });
 
     if (isAdmin) {
       links.push({ label: 'Admin', view: 'admin' });
-      links.push({ label: 'Metrics', view: 'metrics' });
     }
 
     return links;
@@ -117,6 +120,7 @@ function AppContent() {
 
   const renderView = () => {
     if (viewMode === 'about') return <AboutView />;
+    if (viewMode === 'metrics') return <MetricsDashboard />;
     if (!wallet.isConnected || !wallet.publicKey) {
       return (
         <div className="flex flex-col items-center justify-center py-32 text-center">
@@ -131,6 +135,8 @@ function AppContent() {
         </div>
       );
     }
+    if (viewMode === 'metrics')
+      return <MetricsDashboard />;
     if (viewMode === 'admin' && isAdmin && adminAddress === wallet.publicKey)
       return <AdminView publicKey={wallet.publicKey} />;
     if (viewMode === 'metrics' && isAdmin)
@@ -138,8 +144,7 @@ function AppContent() {
     if (viewMode === 'admin' || viewMode === 'metrics') {
       setViewMode(isVC ? 'vc' : 'founder');
       return null;
-    }
-    switch (viewMode) {
+    }    switch (viewMode) {
       case 'vc': return <VCView publicKey={wallet.publicKey} />;
       case 'voting': return <PublicVotingView publicKey={wallet.publicKey} />;
       case 'founder': return <FounderView publicKey={wallet.publicKey} />;
