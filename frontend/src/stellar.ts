@@ -217,7 +217,10 @@ export const submitWithFeeBump = async (
   try {
     const res = await fetch('/api/fee-bump', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-deco-secret': import.meta.env.VITE_FEE_BUMP_SECRET || '',
+      },
       body: JSON.stringify({ innerTxXdr: signedTx.toXDR() }),
     });
 

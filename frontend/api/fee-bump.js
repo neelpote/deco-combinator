@@ -23,6 +23,12 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Verify secret header — prevents unauthorized use of sponsor wallet
+  const secret = req.headers['x-deco-secret'];
+  if (!secret || secret !== process.env.FEE_BUMP_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const { innerTxXdr } = req.body;
   if (!innerTxXdr) return res.status(400).json({ error: 'Missing innerTxXdr' });
 

@@ -323,6 +323,54 @@ The following Stellar wallets participated in the DeCo testnet beta. Their feedb
 
 ---
 
+## Monitoring Dashboard
+
+DeCo uses **Vercel Analytics** for infrastructure monitoring (request volume, latency, error rates) and **Supabase** for application-level metrics.
+
+The live metrics dashboard is built into the app and accessible at:
+
+**[Live Metrics Dashboard →](https://frontend-eight-navy-19.vercel.app)** (navigate to the Metrics tab)
+
+Vercel deployment monitoring (uptime, build status, function logs):
+
+**[Vercel Project Dashboard →](https://vercel.com/dashboard)** (project: `frontend`)
+
+Metrics tracked in real-time:
+- Daily Active Users (DAU) — unique wallets per day
+- Total wallet sessions
+- On-chain startup and VC counts (live from Soroban RPC)
+- Messages sent via founder↔VC chat
+- Feature usage events (apply, invest, stake_vc, vote)
+- 7-day DAU chart with bar visualization
+
+---
+
+## Data Indexing
+
+DeCo uses a two-layer indexing approach:
+
+### On-Chain (Soroban RPC)
+All core state lives on-chain and is read directly via Stellar's Soroban RPC:
+- `get_all_startups()` — returns all founder addresses
+- `get_all_vcs()` — returns all verified VC addresses
+- `get_startup_status(founder)` — full startup data including votes, funding, milestones
+- `get_vc_data(vc)` — VC profile and investment history
+
+### Off-Chain (Supabase)
+Social and analytics data that doesn't belong on-chain is indexed in Supabase (PostgreSQL):
+
+| Table | What it tracks |
+|---|---|
+| `wallet_sessions` | One row per wallet per day — used for DAU calculation |
+| `page_events` | Feature usage events with metadata (apply, invest, stake_vc, vote, etc.) |
+| `messages` | Founder↔VC direct messages, keyed by deterministic chat ID |
+
+Supabase project: `https://cmitzlpyzkehsnshuhxl.supabase.co`
+
+All tables have Row Level Security (RLS) enabled. Data is append-only — no deletes or updates. See [SECURITY.md](SECURITY.md) for full RLS policy details.
+
+---
+
 ## Contributing
 
 ```bash
