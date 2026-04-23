@@ -228,4 +228,4 @@ Summary of completed items:
 
 ## Community Contribution
 
-Post about DeCo on Twitter/X: *(add your tweet link here)*
+Post about DeCo on Twitter/X: https://x.com/neel_pote/status/2047137581180260809?s=20
