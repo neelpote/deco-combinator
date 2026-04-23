@@ -119,7 +119,7 @@ function AppContent() {
   }, [wallet.publicKey, isAdmin, isVC]);
 
   const renderView = () => {
-    if (viewMode === 'about') return <AboutView />;
+    if (viewMode === 'about') return <AboutView onBack={() => setViewMode(wallet.isConnected ? (isVC ? 'vc' : 'founder') : 'founder')} />;
     if (viewMode === 'metrics') return <MetricsDashboard />;
     if (!wallet.isConnected || !wallet.publicKey) {
       return (

@@ -1,4 +1,6 @@
-export const AboutView = () => {
+interface AboutViewProps { onBack?: () => void; }
+
+export const AboutView = ({ onBack }: AboutViewProps) => {
   const steps = [
     {
       n: '01',
@@ -66,6 +68,14 @@ export const AboutView = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-16">
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-black transition-colors"
+        >
+          ← Back
+        </button>
+      )}
 
       {/* Hero */}
       <div className="space-y-4">
