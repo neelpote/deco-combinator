@@ -72,6 +72,8 @@ export const VCView = ({ publicKey }: VCViewProps) => {
     queryKey: ['vcViewStartup', viewingAddress],
     queryFn: () => viewingAddress ? getStartupStatus(viewingAddress) : null,
     enabled: !!viewingAddress,
+    retry: 1,
+    retryDelay: 1000,
   });
 
   const { data: startupMetadata } = useIPFSMetadata(startupData?.ipfs_cid);
@@ -473,7 +475,16 @@ export const VCView = ({ publicKey }: VCViewProps) => {
       {viewingAddress && startupData && !startupData.exists && (
         <div className="card text-center py-12">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Startup Not Found</div>
-          <p className="text-zinc-500 text-sm">No application found for this address.</p>
+          <p className="text-zinc-500 text-sm">No application found for this address. Double-check the address and try again.</p>
+          <button onClick={() => setViewingAddress(null)} className="mt-4 text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-black transition-colors">← Clear Search</button>
+        </div>
+      )}
+
+      {viewingAddress && !startupData && (
+        <div className="card text-center py-12">
+          <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-zinc-500 text-sm">Looking up address...</p>
+          <button onClick={() => setViewingAddress(null)} className="mt-4 text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-black transition-colors">← Cancel</button>
         </div>
       )}
 

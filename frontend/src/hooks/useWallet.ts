@@ -14,7 +14,8 @@ export const useWallet = () => {
       const connected = await isConnected();
       
       if (!connected) {
-        alert('Please install Freighter wallet extension');
+        const install = window.confirm('Freighter wallet is not installed. Click OK to open the install page.');
+        if (install) window.open('https://www.freighter.app/', '_blank');
         return;
       }
 

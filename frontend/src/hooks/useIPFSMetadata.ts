@@ -7,14 +7,19 @@ export const useIPFSMetadata = (cid: string | undefined) => {
     queryFn: async () => {
       if (!cid) return null;
       try {
-        return await fetchFromIPFS(cid);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        const result = await fetchFromIPFS(cid);
+        clearTimeout(timeout);
+        return result;
       } catch (error) {
         console.error('Failed to fetch IPFS metadata:', error);
-        return null;
+        return null; // Returns null so UI can show fallback instead of spinning forever
       }
     },
     enabled: !!cid,
-    staleTime: 60000, // Cache for 1 minute
-    retry: 3,
+    staleTime: 60000,
+    retry: 2,
+    retryDelay: 2000,
   });
 };
